@@ -1,0 +1,796 @@
+# 专属情侣互动系统（网页小游戏）全套指南
+
+本方案为单文件 HTML 架构（包含完整的样式与交互逻辑），无需购买服务器或域名，复制后即可在浏览器、手机上即时打开，并支持断网离线运行与本地数据存储（刷新页面积分不丢失）。
+
+---
+
+## 一、完整网页源代码（单文件 HTML）
+
+新建一个文本文件，将以下完整代码粘贴进去，并重命名为 `index.html`：
+
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Our Love Story - 专属恋爱系统</title>
+  <style>
+    :root {
+      --primary-pink: #ff758c;
+      --secondary-pink: #ff7eb3;
+      --soft-bg: #fff5f7;
+      --card-bg: #ffffff;
+      --text-dark: #4a4a4a;
+      --text-muted: #8c8c8c;
+      --gold: #f5a623;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--soft-bg);
+      color: var(--text-dark);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* 手机端容器 */
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 0 20px rgba(255, 117, 140, 0.15);
+      padding-bottom: 75px;
+    }
+
+    /* 顶部状态栏 */
+    header {
+      background: linear-gradient(135deg, var(--primary-pink), var(--secondary-pink));
+      padding: 24px 20px 20px;
+      color: white;
+      border-radius: 0 0 24px 24px;
+      box-shadow: 0 4px 15px rgba(255, 117, 140, 0.3);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .couple-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .coin-badge {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .header-subtitle {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      margin-top: 6px;
+    }
+
+    /* 主体内容区域 */
+    main {
+      padding: 16px;
+      flex: 1;
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 卡片通用样式 */
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+      border: 1px solid #ffeef1;
+      box-shadow: 0 4px 12px rgba(255, 182, 193, 0.12);
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 问答模块样式 */
+    .quiz-question {
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.5;
+      margin-bottom: 12px;
+      color: #444;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-btn {
+      padding: 12px 14px;
+      border: 1.5px solid #ffe1e7;
+      background: #fffafa;
+      border-radius: 12px;
+      text-align: left;
+      font-size: 0.9rem;
+      color: #555;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .option-btn:hover, .option-btn:active {
+      background: #ffeef2;
+      border-color: var(--primary-pink);
+      color: var(--primary-pink);
+    }
+
+    .option-btn.correct {
+      background: #e8f8f0;
+      border-color: #2ecc71;
+      color: #27ae60;
+      font-weight: 600;
+    }
+
+    .option-btn.wrong {
+      background: #fdebee;
+      border-color: #e74c3c;
+      color: #c0392b;
+    }
+
+    /* 商城模块样式 */
+    .shop-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .shop-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px;
+      background: #fff9fa;
+      border: 1px solid #ffe8ed;
+      border-radius: 14px;
+    }
+
+    .shop-item-info {
+      flex: 1;
+    }
+
+    .shop-item-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .shop-item-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .shop-item-cost {
+      font-size: 0.85rem;
+      color: var(--gold);
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .redeem-btn {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, var(--primary-pink), var(--secondary-pink));
+      color: white;
+      border: none;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(255, 117, 140, 0.3);
+      transition: transform 0.1s;
+    }
+
+    .redeem-btn:active {
+      transform: scale(0.95);
+    }
+
+    .redeem-btn.disabled {
+      background: #ccc;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* 扭蛋机模块样式 */
+    .gacha-box {
+      text-align: center;
+      padding: 24px 10px;
+    }
+
+    .gacha-sphere {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 20px;
+      background: radial-gradient(circle at 35% 35%, #ffffff, #ff758c 75%);
+      border-radius: 50%;
+      box-shadow: 0 10px 25px rgba(255, 117, 140, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      cursor: pointer;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .gacha-sphere.shaking {
+      animation: shake 0.6s ease infinite;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      20% { transform: translate(-4px, 4px) rotate(-6deg); }
+      40% { transform: translate(4px, -4px) rotate(6deg); }
+      60% { transform: translate(-4px, -4px) rotate(-3deg); }
+      80% { transform: translate(4px, 4px) rotate(3deg); }
+    }
+
+    .gacha-result {
+      min-height: 80px;
+      padding: 16px;
+      background: #fff7f9;
+      border: 1.5px dashed var(--primary-pink);
+      border-radius: 14px;
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      color: #ff5277;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    /* 底部导航栏 */
+    nav {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 65px;
+      background: #ffffff;
+      border-top: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .nav-btn .icon {
+      font-size: 1.3rem;
+    }
+
+    .nav-btn.active {
+      color: var(--primary-pink);
+      font-weight: 700;
+    }
+
+    /* 弹窗样式 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: white;
+      width: 100%;
+      max-width: 360px;
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-pink);
+      margin-bottom: 12px;
+    }
+
+    .modal-body {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    .modal-close-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--primary-pink), var(--secondary-pink));
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* 飘落爱心画布 */
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 998;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confettiCanvas"></canvas>
+
+  <div class="app-container">
+    <!-- 头部信息 -->
+    <header>
+      <div class="header-top">
+        <div class="couple-title">❤️ 专属恋爱任务系统</div>
+        <div class="coin-badge">
+          <span>💖</span>
+          <span id="coinCount">100</span>
+          <span>币</span>
+        </div>
+      </div>
+      <div class="header-subtitle">为全世界最好的女朋友量身打造 ✨</div>
+    </header>
+
+    <!-- 主体内容 -->
+    <main>
+      <!-- 页面 1: 问答闯关 -->
+      <section id="page-quiz" class="page active">
+        <div class="card">
+          <div class="card-title">📖 恋爱回忆闯关</div>
+          <p style="font-size:0.85rem; color:#777; margin-bottom:14px;">答对题目即可收获恋爱积分，快来测试我们的默契吧！</p>
+          <div id="quizContainer">
+            <!-- 题目由 JS 动态渲染 -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 页面 2: 恋爱商城 -->
+      <section id="page-shop" class="page">
+        <div class="card">
+          <div class="card-title">🎁 专属兑换商城</div>
+          <p style="font-size:0.85rem; color:#777; margin-bottom:14px;">所有兑换券均可在现实中找我兑现，绝不逾期！</p>
+          <div class="shop-grid" id="shopContainer">
+            <!-- 商品由 JS 动态渲染 -->
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🎒 我的已兑换卡券</div>
+          <div id="inventoryContainer" style="font-size:0.9rem; color:#666;">
+            暂无已兑换项目，快去完成任务兑换吧～
+          </div>
+        </div>
+      </section>
+
+      <!-- 页面 3: 扭蛋抽卡 -->
+      <section id="page-gacha" class="page">
+        <div class="card">
+          <div class="card-title">🎰 每日心动扭蛋机</div>
+          <p style="font-size:0.85rem; color:#777; margin-bottom:10px;">每次抽取消耗 10 恋爱币，抽取一句专属真情告白与隐藏彩蛋！</p>
+          <div class="gacha-box">
+            <div class="gacha-sphere" id="gachaSphere" onclick="drawGacha()">🎁</div>
+            <button class="redeem-btn" onclick="drawGacha()" style="padding: 10px 24px; font-size: 0.95rem;">点击扭一扭</button>
+            <div class="gacha-result" id="gachaResult">
+              点击上面的扭蛋，抽取给你的情话吧～
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 底部导航 -->
+    <nav>
+      <button class="nav-btn active" onclick="switchTab('quiz', this)">
+        <span class="icon">🎮</span>
+        <span>默契问答</span>
+      </button>
+      <button class="nav-btn" onclick="switchTab('shop', this)">
+        <span class="icon">🛍️</span>
+        <span>恋爱商城</span>
+      </button>
+      <button class="nav-btn" onclick="switchTab('gacha', this)">
+        <span class="icon">✨</span>
+        <span>心动扭蛋</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- 弹窗展示 -->
+  <div class="modal-overlay" id="customModal">
+    <div class="modal-card">
+      <div class="modal-title" id="modalTitle">提示</div>
+      <div class="modal-body" id="modalBody">内容详情</div>
+      <button class="modal-close-btn" onclick="closeModal()">开心收下</button>
+    </div>
+  </div>
+
+  <script>
+    /* ================= 1. 数据配置区（可自由修改） ================= */
+    const GAME_CONFIG = {
+      initialCoins: 100, // 初始赠送积分
+      
+      // 问答题库
+      questions: [
+        {
+          id: 1,
+          question: "我们第一次正式约会喝的饮品是什么？",
+          options: ["杨枝甘露", "生椰拿铁", "多肉葡萄", "抹茶星冰乐"],
+          correct: 2, // 选项下标从 0 开始（2 代表多肉葡萄）
+          reward: 50,
+          explanation: "答对啦！那时候你还悄悄分了一半给我喝～"
+        },
+        {
+          id: 2,
+          question: "在我眼里，你最最迷人的瞬间是？",
+          options: ["认真工作的时候", "吃到好吃的东西时眼睛放光", "睡醒迷迷糊糊的时候", "以上全部！"],
+          correct: 3,
+          reward: 50,
+          explanation: "必须是全选项！你在我心里每一个角度都是满分！"
+        },
+        {
+          id: 3,
+          question: "今天是我喜欢你的第几天？",
+          options: ["第 100 天", "每一天都比昨天多一点", "数不清的许多天", "反正未来每一天都在"],
+          correct: 1,
+          reward: 80,
+          explanation: "每一天都比昨天多一点，未来也是！"
+        }
+      ],
+
+      // 商城兑换奖励
+      shopItems: [
+        {
+          id: 101,
+          name: "💆 30分钟专属捏肩按摩券",
+          desc: "随时召唤随叫随到，力度随意调节。",
+          cost: 40
+        },
+        {
+          id: 102,
+          name: "🧋 无论何时何地想喝就喝奶茶券",
+          desc: "无条件跑腿买单送达。",
+          cost: 60
+        },
+        {
+          id: 103,
+          name: "🤫 绝对无条件原谅券 x1",
+          desc: "发生争吵时出示立即休战，男方负责哄开心。",
+          cost: 100
+        },
+        {
+          id: 104,
+          name: "🎁 神秘现实终极大奖",
+          desc: "花费全部积攒的积分，解锁今晚最大的秘密惊喜！",
+          cost: 200,
+          isGrandPrize: true // 是否为实物联动大奖
+        }
+      ],
+
+      // 扭蛋机情话列表
+      loveQuotes: [
+        "遇见你，是我这辈子最心动的意外。❤️",
+        "无论今天过得怎么样，都有我在你身后撑腰！💪",
+        "生活很苦，但一想到你，心底就是甜的。🍬",
+        "今日限定提醒：记得多喝温水，想我 100 次！✨",
+        "恭喜抽中隐藏彩蛋：你可以向我提出一个愿望！🌟",
+        "无论世界怎么变化，你永远是我第一顺位的偏爱。"
+      ]
+    };
+
+    /* ================= 2. 状态管理 ================= */
+    let userCoins = parseInt(localStorage.getItem('love_coins')) || GAME_CONFIG.initialCoins;
+    let answeredQuestions = JSON.parse(localStorage.getItem('answered_quiz')) || [];
+    let redeemedInventory = JSON.parse(localStorage.getItem('user_inventory')) || [];
+
+    function saveState() {
+      localStorage.setItem('love_coins', userCoins);
+      localStorage.setItem('answered_quiz', JSON.stringify(answeredQuestions));
+      localStorage.setItem('user_inventory', JSON.stringify(redeemedInventory));
+      updateCoinDisplay();
+    }
+
+    function updateCoinDisplay() {
+      document.getElementById('coinCount').innerText = userCoins;
+    }
+
+    /* ================= 3. 标签切换 ================= */
+    function switchTab(tabName, btnElement) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      
+      document.getElementById(`page-${tabName}`).classList.add('active');
+      btnElement.classList.add('active');
+    }
+
+    /* ================= 4. 问答逻辑 ================= */
+    function renderQuiz() {
+      const container = document.getElementById('quizContainer');
+      container.innerHTML = '';
+
+      GAME_CONFIG.questions.forEach((q, qIndex) => {
+        const isAnswered = answeredQuestions.includes(q.id);
+        const card = document.createElement('div');
+        card.style.marginBottom = '20px';
+
+        card.innerHTML = `
+          <div class="quiz-question">${qIndex + 1}. ${q.question}</div>
+          <div class="quiz-options">
+            ${q.options.map((opt, optIndex) => `
+              <button class="option-btn ${isAnswered ? (optIndex === q.correct ? 'correct' : 'disabled') : ''}" 
+                      onclick="handleAnswer(${q.id}, ${optIndex}, this)">
+                ${opt}
+              </button>
+            `).join('')}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function handleAnswer(questionId, selectedIndex, btn) {
+      if (answeredQuestions.includes(questionId)) return;
+
+      const q = GAME_CONFIG.questions.find(item => item.id === questionId);
+      if (selectedIndex === q.correct) {
+        btn.classList.add('correct');
+        userCoins += q.reward;
+        answeredQuestions.push(questionId);
+        saveState();
+        triggerConfetti();
+        openModal("🎉 恭喜答对！", `${q.explanation}<br><br><b>+${q.reward} 恋爱币已入账！</b>`);
+        setTimeout(renderQuiz, 800);
+      } else {
+        btn.classList.add('wrong');
+        openModal("哎呀答错了~", "再仔细回忆一下，或者向我撒个娇换一次提示！");
+      }
+    }
+
+    /* ================= 5. 商城逻辑 ================= */
+    function renderShop() {
+      const container = document.getElementById('shopContainer');
+      container.innerHTML = '';
+
+      GAME_CONFIG.shopItems.forEach(item => {
+        const canAfford = userCoins >= item.cost;
+        const div = document.createElement('div');
+        div.className = 'shop-item';
+        div.innerHTML = `
+          <div class="shop-item-info">
+            <div class="shop-item-title">${item.name}</div>
+            <div class="shop-item-desc">${item.desc}</div>
+            <div class="shop-item-cost">💎 ${item.cost} 恋爱币</div>
+          </div>
+          <button class="redeem-btn ${canAfford ? '' : 'disabled'}" onclick="redeemItem(${item.id})">
+            兑换
+          </button>
+        `;
+        container.appendChild(div);
+      });
+
+      renderInventory();
+    }
+
+    function redeemItem(itemId) {
+      const item = GAME_CONFIG.shopItems.find(i => i.id === itemId);
+      if (userCoins < item.cost) {
+        openModal("余额不足", "恋爱币不够啦，快去完成问答题或者向男朋友讨要零花钱吧！");
+        return;
+      }
+
+      userCoins -= item.cost;
+      redeemedInventory.push({
+        id: item.id,
+        name: item.name,
+        date: new Date().toLocaleDateString()
+      });
+      saveState();
+      renderShop();
+      triggerConfetti();
+
+      if (item.isGrandPrize) {
+        openModal("👑 终极大奖已解锁！", "请你现在立刻转过身看一看（或者去打开衣柜第二个抽屉），那里有一份专属惊喜等待着你！");
+      } else {
+        openModal("兑换成功！", `你已成功兑换【${item.name}】！<br>已存入背包，随时可以找我核销使用！`);
+      }
+    }
+
+    function renderInventory() {
+      const container = document.getElementById('inventoryContainer');
+      if (redeemedInventory.length === 0) {
+        container.innerHTML = '暂无已兑换卡券，快去完成任务兑换吧～';
+        return;
+      }
+
+      container.innerHTML = redeemedInventory.map(item => `
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ffe1e7;">
+          <span>${item.name}</span>
+          <span style="color:#aaa; font-size:0.8rem;">已生效</span>
+        </div>
+      `).join('');
+    }
+
+    /* ================= 6. 扭蛋机逻辑 ================= */
+    let isDrawing = false;
+    function drawGacha() {
+      if (isDrawing) return;
+      if (userCoins < 10) {
+        openModal("恋爱币不足", "抽扭蛋需要 10 恋爱币，快去做任务答题赚取吧！");
+        return;
+      }
+
+      isDrawing = true;
+      userCoins -= 10;
+      saveState();
+
+      const sphere = document.getElementById('gachaSphere');
+      const resultBox = document.getElementById('gachaResult');
+
+      sphere.classList.add('shaking');
+      resultBox.innerText = "扭蛋晃动中... 甜蜜即将来袭...";
+
+      setTimeout(() => {
+        sphere.classList.remove('shaking');
+        const randomIndex = Math.floor(Math.random() * GAME_CONFIG.loveQuotes.length);
+        const prize = GAME_CONFIG.loveQuotes[randomIndex];
+        resultBox.innerHTML = `💌 ${prize}`;
+        triggerConfetti();
+        isDrawing = false;
+      }, 900);
+    }
+
+    /* ================= 7. 弹窗与彩带特效 ================= */
+    function openModal(title, text) {
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalBody').innerHTML = text;
+      document.getElementById('customModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('customModal').style.display = 'none';
+    }
+
+    // 纯原生 Canvas 飘落彩色爱心粒子特效
+    function triggerConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const particles = [];
+      const colors = ['#ff758c', '#ff7eb3', '#ffc3a0', '#ffb199', '#f368e0'];
+
+      for (let i = 0; i < 40; i++) {
+        particles.push({
+          x: canvas.width / 2,
+          y: canvas.height / 2,
+          r: Math.random() * 8 + 4,
+          dx: (Math.random() - 0.5) * 10,
+          dy: (Math.random() - 0.7) * 12,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          tilt: Math.random() * 10,
+          alpha: 1
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let activeCount = 0;
+
+        particles.forEach(p => {
+          if (p.alpha > 0) {
+            ctx.save();
+            ctx.globalAlpha = p.alpha;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            p.x += p.dx;
+            p.y += p.dy;
+            p.dy += 0.3; // 重力
+            p.alpha -= 0.015;
+            activeCount++;
+          }
+        });
+
+        if (activeCount > 0) {
+          requestAnimationFrame(draw);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      draw();
+    }
+
+    /* ================= 初始化启动 ================= */
+    updateCoinDisplay();
+    renderQuiz();
+    renderShop();
+  </script>
+</body>
+</html>
